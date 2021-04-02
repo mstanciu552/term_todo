@@ -6,6 +6,7 @@ extern crate chrono;
 pub mod schema;
 pub mod models;
 
+use schema::tasks;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
@@ -24,7 +25,6 @@ pub fn establish_connection() -> PgConnection {
 }
 
 pub fn make_task<'a>(conn: &PgConnection, title: &'a str, until_at: &'a str) -> Task {
-    use schema::tasks;
   
     // Expected date format `YYYY-MM-DD`
     if until_at.len() != 0 {

@@ -1,12 +1,11 @@
 use super::chrono;
-use diesel::sql_types::Date;
 use super::schema::tasks;
 
 #[derive(Queryable)]
 pub struct Task {
     pub id: i32,
     pub title: String,
-    pub created_at: Date,
+    pub created_at: chrono::NaiveDate,
     pub until_at: Option<chrono::NaiveDate>,
     pub in_progress: bool,
 }
