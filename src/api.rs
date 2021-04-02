@@ -1,31 +1,29 @@
-extern crate diesel;
 extern crate chrono;
+extern crate diesel;
 extern crate term_todo;
 
-
-use diesel::PgConnection;
-use diesel::prelude::*;
 use self::term_todo::*;
-use std::io::stdin;
-use std::env::args;
+use diesel::prelude::*;
+use diesel::PgConnection;
 use models::Task;
+use std::env::args;
+use std::io::stdin;
 
 pub struct Database {
-    pub conn: PgConnection
+    pub conn: PgConnection,
 }
 
 impl Database {
     pub fn new(conn: PgConnection) -> Database {
-        Database {
-            conn
-        }
+        Database { conn }
     }
 
     pub fn show_tasks(self) {
         use term_todo::schema::tasks::dsl::*;
 
         let conn = self.conn;
-        let res: Vec<Task> = tasks.limit(5)
+        let res: Vec<Task> = tasks
+            .limit(5)
             .load::<Task>(&conn)
             .expect("Error loading tasks");
 
@@ -52,27 +50,41 @@ impl Database {
         println!("Saved task {}", task.title);
     }
 
-    pub fn delete_task(self) {
+    pub fn delete_task(self, arg: bool) {
         use schema::tasks::dsl::*;
+        let conn = &self.conn;
 
-        let target = args().nth(1).expect("Expected target title");
-        let pattern = format!("%{}%", target);
-        let conn = self.conn;
+        if arg {
+            let target = args().nth(2).expect("Expected target title");
+            let pattern = format!("%{}%", target);
+            let num_deleted = diesel::delete(tasks.filter(title.like(pattern)))
+                .execute(conn)
+                .expect("Failed to delete!");
+            println!("Deleted {} posts", num_deleted);
+        } else {
+            let mut target = String::new();
+            println!("Task to delete: ");
+            stdin().read_line(&mut target).unwrap();
+            let target = target.trim_end();
+            let pattern = format!("%{}%", target);
 
-        let num_deleted = diesel::delete(tasks.filter(title.like(pattern)))
-            .execute(&conn)
-            .expect("Failed to delete!");
-        println!("Deleted {} posts", num_deleted);
+            let num_deleted = diesel::delete(tasks.filter(title.like(pattern)))
+                .execute(conn)
+                .expect("Failed to delete!");
+            println!("Deleted {} posts", num_deleted);
+        }
+        self.show_tasks();
     }
-
     pub fn update_data(self, arg: bool) {
         use schema::tasks::dsl::*;
         let conn = self.conn;
         if arg {
             // Get command line arguments
-            let target_id = args().nth(1).expect("publish_post requires post id")
-                .parse::<i32>().expect("Invalid ID");
-
+            let target_id = args()
+                .nth(1)
+                .expect("publish_post requires post id")
+                .parse::<i32>()
+                .expect("Invalid ID");
 
             // Update specified post
             let task: Task = diesel::update(tasks.find(target_id))
@@ -92,8 +104,6 @@ impl Database {
                 .get_result(&conn)
                 .expect(&format!("Unable to find task {}", target_id));
             println!("Changed status of task {} to in progress", task.title);
-
         }
     }
-
 }
