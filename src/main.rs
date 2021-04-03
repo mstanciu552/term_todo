@@ -37,10 +37,8 @@ fn main() {
                 None => String::from(""),
             };
             if cli_args.len() == 0 {
-                db.show_tasks();
                 db.update_data(false);
             } else {
-                db.show_tasks();
                 db.update_data(true);
             }
         }
@@ -51,10 +49,8 @@ fn main() {
                 None => String::from(""),
             };
             if cli_args.len() == 0 {
-                db.show_tasks();
                 db.update_title(false);
             } else {
-                db.show_tasks();
                 db.update_title(true);
             }
         }
@@ -65,10 +61,8 @@ fn main() {
                 None => String::from(""),
             };
             if cli_args.len() == 0 {
-                db.show_tasks();
                 db.update_until(false);
             } else {
-                db.show_tasks();
                 db.update_until(true);
             }
         }
