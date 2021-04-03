@@ -6,12 +6,10 @@ use self::term_todo::*;
 use api::Database;
 use std::env::args;
 
-// TODO Show tasks when deleting by keyboard input
-// TODO Make update of task possible
-
 fn main() {
     let conn = establish_connection();
     let db = Database::new(conn);
+
     // CLI commands handling
     let arg = args().nth(1).expect("Getting arguments failed");
 
@@ -29,6 +27,21 @@ fn main() {
                 db.delete_task(false);
             } else {
                 db.delete_task(true);
+            }
+        }
+        "doing" => {
+            // Either wait for another argument or ask for input
+            let target_id = args().nth(2);
+            let cli_args = match target_id {
+                Some(val) => val,
+                None => String::from(""),
+            };
+            if cli_args.len() == 0 {
+                db.show_tasks();
+                db.update_data(false);
+            } else {
+                db.show_tasks();
+                db.update_data(true);
             }
         }
         _ => {

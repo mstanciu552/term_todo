@@ -10,31 +10,36 @@ use std::env::args;
 use std::io::stdin;
 
 pub struct Database {
-    pub conn: PgConnection,
+    conn: PgConnection,
 }
 
 impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
     }
-
-    pub fn show_tasks(self) {
+    // Display all tasks
+    pub fn show_tasks(&self) {
         use term_todo::schema::tasks::dsl::*;
 
-        let conn = self.conn;
+        let conn = &self.conn;
         let res: Vec<Task> = tasks
             .limit(5)
-            .load::<Task>(&conn)
+            .load::<Task>(conn)
             .expect("Error loading tasks");
 
         println!("There are {} tasks", res.len());
         for task in res {
-            println!("{}: {} ==> {}", task.id, task.title, task.in_progress);
+            println!("-------------------------------------------------");
+            println!(
+                "|{}: {} ==> {}\t\t\t\t|\n| Due date: {:#?}\t\t\t\t|",
+                task.id, task.title, task.in_progress, task.until_at
+            );
+            println!("-------------------------------------------------");
         }
     }
-
-    pub fn add_task(self) {
-        let conn = self.conn;
+    // Make a new task
+    pub fn add_task(&self) {
+        let conn = &self.conn;
 
         println!("Title: ");
         let mut title = String::new();
@@ -50,10 +55,11 @@ impl Database {
         println!("Saved task {}", task.title);
     }
 
-    pub fn delete_task(self, arg: bool) {
+    pub fn delete_task(&self, arg: bool) {
         use schema::tasks::dsl::*;
         let conn = &self.conn;
-
+        self.show_tasks();
+        // Get task to delete based on argument
         if arg {
             let target = args().nth(2).expect("Expected target title");
             let pattern = format!("%{}%", target);
@@ -61,6 +67,8 @@ impl Database {
                 .execute(conn)
                 .expect("Failed to delete!");
             println!("Deleted {} posts", num_deleted);
+
+        // Get task to delete based on input from keyboard
         } else {
             let mut target = String::new();
             println!("Task to delete: ");
@@ -75,24 +83,28 @@ impl Database {
         }
         self.show_tasks();
     }
-    pub fn update_data(self, arg: bool) {
+    pub fn update_data(&self, arg: bool) {
         use schema::tasks::dsl::*;
-        let conn = self.conn;
+        // Get connection to db
+        let conn = &self.conn;
+        // Get task to change status based on argument
         if arg {
             // Get command line arguments
             let target_id = args()
                 .nth(1)
-                .expect("publish_post requires post id")
+                .expect("requires task id")
                 .parse::<i32>()
                 .expect("Invalid ID");
 
             // Update specified post
             let task: Task = diesel::update(tasks.find(target_id))
                 .set(in_progress.eq(true))
-                .get_result(&conn)
+                .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
             println!("Changed status of task {} to in progress", task.title);
+        // Get task to change status based on keyboard input
         } else {
+            // Get keyboard input
             println!("Target_id: ");
             let mut target_id = String::new();
             stdin().read_line(&mut target_id).unwrap();
@@ -101,7 +113,7 @@ impl Database {
             // Update specified post
             let task: Task = diesel::update(tasks.find(target_id))
                 .set(in_progress.eq(true))
-                .get_result(&conn)
+                .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
             println!("Changed status of task {} to in progress", task.title);
         }
