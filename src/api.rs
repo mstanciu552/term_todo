@@ -118,4 +118,92 @@ impl Database {
             println!("Changed status of task {} to in progress", task.title);
         }
     }
+
+    pub fn update_title(&self, arg: bool) {
+        use schema::tasks::dsl::*;
+        // Get connection to db
+        let conn = &self.conn;
+        // Get task to change status based on argument
+        if arg {
+            // Get command line arguments
+            let target_id = args()
+                .nth(1)
+                .expect("requires task id")
+                .parse::<i32>()
+                .expect("Invalid ID");
+            // Get new title
+            let mut new_title = String::new();
+            stdin().read_line(&mut new_title).unwrap();
+            let new_title = new_title.trim_end();
+
+            // Update specified post
+            let task: Task = diesel::update(tasks.find(target_id))
+                .set(title.eq(new_title))
+                .get_result(conn)
+                .expect(&format!("Unable to find task {}", target_id));
+            println!("Changed status of task {} to in progress", task.title);
+        // Get task to change status based on keyboard input
+        } else {
+            // Get keyboard input
+            println!("Target_id: ");
+            let mut target_id = String::new();
+            stdin().read_line(&mut target_id).unwrap();
+            let target_id = target_id.trim_end().parse::<i32>().unwrap();
+            // Get new title
+            let mut new_title = String::new();
+            stdin().read_line(&mut new_title).unwrap();
+            let new_title = new_title.trim_end();
+
+            // Update specified post
+            let task: Task = diesel::update(tasks.find(target_id))
+                .set(title.eq(new_title))
+                .get_result(conn)
+                .expect(&format!("Unable to find task {}", target_id));
+            println!("Changed status of task {} to in progress", task.title);
+        }
+    }
+    pub fn update_until(&self, arg: bool) {
+        use schema::tasks::dsl::*;
+        self.show_tasks();
+        // Get connection to db
+        let conn = &self.conn;
+        // Get task to change status based on argument
+        if arg {
+            // Get command line arguments
+            let target_id = args()
+                .nth(1)
+                .expect("requires task id")
+                .parse::<i32>()
+                .expect("Invalid ID");
+            // Get new date
+            println!("Until(YYYY-MM-DD || <empty>): ");
+            let mut new_until_at = String::new();
+            stdin().read_line(&mut new_until_at).unwrap();
+            let new_until_at = new_until_at.trim_end();
+            // Convert string to NaiveDate
+            let new_until_date = chrono::NaiveDate::parse_from_str(new_until_at, "%Y-%m-%d");
+            println!("{:?}", new_until_date);
+
+            // Update specified post
+            // let task: Task = diesel::update(tasks.find(target_id))
+            //     .set(until_at.eq(new_until_at))
+            //     .get_result(conn)
+            //     .expect(&format!("Unable to find task {}", target_id));
+            // println!("Changed status of task {} to in progress", task.title);
+            // Get task to change status based on keyboard input
+        } else {
+            // Get keyboard input
+            println!("Target_id: ");
+            let mut target_id = String::new();
+            stdin().read_line(&mut target_id).unwrap();
+            let target_id = target_id.trim_end().parse::<i32>().unwrap();
+
+            // Update specified post
+            let task: Task = diesel::update(tasks.find(target_id))
+                .set(in_progress.eq(true))
+                .get_result(conn)
+                .expect(&format!("Unable to find task {}", target_id));
+            println!("Changed status of task {} to in progress", task.title);
+        }
+    }
 }

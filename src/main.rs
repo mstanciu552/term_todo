@@ -44,6 +44,34 @@ fn main() {
                 db.update_data(true);
             }
         }
+        "utitle" => {
+            let target_id = args().nth(2);
+            let cli_args = match target_id {
+                Some(val) => val,
+                None => String::from(""),
+            };
+            if cli_args.len() == 0 {
+                db.show_tasks();
+                db.update_title(false);
+            } else {
+                db.show_tasks();
+                db.update_title(true);
+            }
+        }
+        "udate" => {
+            let target_id = args().nth(2);
+            let cli_args = match target_id {
+                Some(val) => val,
+                None => String::from(""),
+            };
+            if cli_args.len() == 0 {
+                db.show_tasks();
+                db.update_until(false);
+            } else {
+                db.show_tasks();
+                db.update_until(true);
+            }
+        }
         _ => {
             println!("Invalid argument")
         }
