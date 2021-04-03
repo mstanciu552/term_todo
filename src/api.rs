@@ -3,6 +3,7 @@ extern crate diesel;
 extern crate term_todo;
 
 use self::term_todo::*;
+use colored::Colorize;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use models::Task;
@@ -27,16 +28,16 @@ impl Database {
             .load::<Task>(conn)
             .expect("Error loading tasks");
 
-        println!("There are {} tasks", res.len());
+        println!("There are {} tasks", res.len().to_string().as_str().bold());
         for task in res {
             println!("-------------------------------------------------");
             println!(
-                "|{}: {} ==> {}\t\t\t\t|\n|Created at: {}\t\t\t\t|\n|Due date: {:#?}\t\t\t\t|",
-                task.id,
-                task.title,
-                task.in_progress,
-                task.created_at,
-                task.until_at.unwrap()
+                "|{}: {} ==> {}\t\t\t\t|\n|Created at: {}\t\t\t\t|\n|Due date: {}\t\t\t\t|",
+                task.id.to_string().as_str().blue(),
+                task.title.magenta().bold(),
+                task.in_progress.to_string().as_str().cyan(),
+                task.created_at.to_string().as_str().green(),
+                task.until_at.unwrap().to_string().as_str().red()
             );
             println!("-------------------------------------------------");
         }
@@ -140,6 +141,7 @@ impl Database {
                 .parse::<i32>()
                 .expect("Invalid ID");
             // Get new title
+            println!("New Title: ");
             let mut new_title = String::new();
             stdin().read_line(&mut new_title).unwrap();
             let new_title = new_title.trim_end();
@@ -149,7 +151,7 @@ impl Database {
                 .set(title.eq(new_title))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed status of task {} to in progress", task.title);
+            println!("Changed title of task {} to {}", task.id, task.title);
         // Get task to change status based on keyboard input
         } else {
             // Get keyboard input
@@ -158,6 +160,7 @@ impl Database {
             stdin().read_line(&mut target_id).unwrap();
             let target_id = target_id.trim_end().parse::<i32>().unwrap();
             // Get new title
+            println!("New Title: ");
             let mut new_title = String::new();
             stdin().read_line(&mut new_title).unwrap();
             let new_title = new_title.trim_end();
@@ -167,8 +170,9 @@ impl Database {
                 .set(title.eq(new_title))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed status of task {} to in progress", task.title);
+            println!("Changed title of task {} to {}", task.id, task.title);
         }
+        self.show_tasks();
     }
     pub fn update_until(&self, arg: bool) {
         use schema::tasks::dsl::*;
@@ -191,14 +195,17 @@ impl Database {
             // Convert string to NaiveDate
             let new_until_date =
                 chrono::NaiveDate::parse_from_str(new_until_at, "%Y-%m-%d").unwrap();
-            println!("{:?}", new_until_date);
 
             // Update specified post
             let task: Task = diesel::update(tasks.find(target_id))
                 .set(until_at.eq(new_until_date))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed status of task {} to in progress", task.title);
+            println!(
+                "Changed due date of task {} to {}",
+                task.title,
+                task.until_at.unwrap()
+            );
             // Get task to change status based on keyboard input
         } else {
             // Get keyboard input
@@ -215,14 +222,17 @@ impl Database {
             // Convert string to NaiveDate
             let new_until_date =
                 chrono::NaiveDate::parse_from_str(new_until_at, "%Y-%m-%d").unwrap();
-            println!("{:?}", new_until_date);
 
             // Update specified post
             let task: Task = diesel::update(tasks.find(target_id))
                 .set(until_at.eq(new_until_date))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed status of task {} to in progress", task.title);
+            println!(
+                "Changed due date of task {} to {}",
+                task.title,
+                task.until_at.unwrap()
+            );
         }
         self.show_tasks();
     }

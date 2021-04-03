@@ -6,6 +6,8 @@ use self::term_todo::*;
 use api::Database;
 use std::env::args;
 
+// TODO Add help menu
+
 fn main() {
     let conn = establish_connection();
     let db = Database::new(conn);
@@ -65,6 +67,10 @@ fn main() {
             } else {
                 db.update_until(true);
             }
+        }
+        "help" => {
+            println!("Help menu\n");
+            println!("Valid commands: \n");
         }
         _ => {
             println!("Invalid argument")

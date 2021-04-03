@@ -4,9 +4,14 @@ version = "0.1.0"
 authors = ["mstanciu552 <mstanciu552@gmail.com>"]
 edition = "2018"
 
+[[bin]]
+name = "ttask"
+path = "src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 chrono = "0.4.19"
 diesel = { version="1.4.4", features=["chrono", "postgres"] }
+colored = "2"
 dotenv = "0.15.0"
