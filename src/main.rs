@@ -68,6 +68,7 @@ fn main() {
                 db.update_until(true);
             }
         }
+        "board" => db.display_board(),
         "help" => help(),
         _ => {
             println!("Invalid argument")

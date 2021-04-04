@@ -12,12 +12,6 @@ use regex::Regex;
 use std::env::args;
 use std::io::stdin;
 
-// Utility function
-fn type_of<T>(_: T) -> &'static str {
-    use std::any::type_name;
-    type_name::<T>()
-}
-
 pub struct Database {
     conn: PgConnection,
 }
@@ -25,6 +19,20 @@ pub struct Database {
 impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
+    }
+    // TODO Separate based on status and add command loop
+    // Board display
+    pub fn display_board(&self) {
+        use term_todo::schema::tasks::dsl::*;
+
+        let conn = &self.conn;
+        let res: Vec<Task> = tasks
+            .limit(20)
+            .load::<Task>(conn)
+            .expect("Error loading tasks");
+        for task in res {
+            println!("Title: {}", task.title);
+        }
     }
     // Display all tasks
     pub fn show_tasks(&self) {
