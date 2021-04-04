@@ -14,4 +14,5 @@ path = "src/main.rs"
 chrono = "0.4.19"
 diesel = { version="1.4.4", features=["chrono", "postgres"] }
 colored = "2"
+regex = "1"
 dotenv = "0.15.0"

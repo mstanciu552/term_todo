@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate diesel;
+extern crate regex;
 extern crate term_todo;
 
 use self::term_todo::*;
@@ -7,8 +8,15 @@ use colored::Colorize;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use models::Task;
+use regex::Regex;
 use std::env::args;
 use std::io::stdin;
+
+// Utility function
+fn type_of<T>(_: T) -> &'static str {
+    use std::any::type_name;
+    type_name::<T>()
+}
 
 pub struct Database {
     conn: PgConnection,
@@ -30,16 +38,20 @@ impl Database {
 
         println!("There are {} tasks", res.len().to_string().as_str().bold());
         for task in res {
-            println!("-------------------------------------------------");
+            println!("---------------------------------");
             println!(
-                "|{}: {} ==> {}\t\t\t\t|\n|Created at: {}\t\t\t\t|\n|Due date: {}\t\t\t\t|",
+                "|{}: {}\t\t\t|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
                 task.in_progress.to_string().as_str().cyan(),
                 task.created_at.to_string().as_str().green(),
-                task.until_at.unwrap().to_string().as_str().red()
+                if task.until_at != None {
+                    task.until_at.unwrap().to_string().as_str().red()
+                } else {
+                    "None".green()
+                }
             );
-            println!("-------------------------------------------------");
+            println!("---------------------------------");
         }
     }
     // Make a new task
@@ -63,30 +75,57 @@ impl Database {
 
     pub fn delete_task(&self, arg: bool) {
         use schema::tasks::dsl::*;
-        self.show_tasks();
         let conn = &self.conn;
         self.show_tasks();
+
+        // TODO Change delete to based on exact pattern
         // Get task to delete based on argument
         if arg {
-            let target = args().nth(2).expect("Expected target title");
-            let pattern = format!("%{}%", target);
-            let num_deleted = diesel::delete(tasks.filter(title.like(pattern)))
-                .execute(conn)
-                .expect("Failed to delete!");
-            println!("Deleted {} posts", num_deleted);
+            println!("Target_id: ");
+            let target_id = args().nth(2).expect("Expected target title");
+            // Decide if the argument passed in is an ID or a TITLE
+            let re = Regex::new(r"^\d*$").unwrap();
+            let input_format = re.is_match(target_id.as_str());
+            if input_format {
+                // Input is number based so an ID
+                let target_id = target_id.parse::<i32>().unwrap();
+
+                let num_deleted = diesel::delete(tasks.find(target_id))
+                    .execute(conn)
+                    .expect("Failed to delete!");
+                println!("Deleted {} posts", num_deleted);
+            } else {
+                let num_deleted = diesel::delete(tasks)
+                    .filter(title.eq(target_id))
+                    .execute(conn)
+                    .expect("Failed to delete!");
+                println!("Deleted {} posts", num_deleted);
+            }
 
         // Get task to delete based on input from keyboard
         } else {
+            println!("Target id: ");
             let mut target = String::new();
-            println!("Task to delete: ");
             stdin().read_line(&mut target).unwrap();
-            let target = target.trim_end();
-            let pattern = format!("%{}%", target);
+            let target_id = target.trim_end();
+            // Decide if the argument passed in is an ID or a TITLE
+            let re = Regex::new(r"^\d*$").unwrap();
+            let input_format = re.is_match(target_id);
+            if input_format {
+                // Input is number based so an ID
+                let target_id = target_id.parse::<i32>().unwrap();
 
-            let num_deleted = diesel::delete(tasks.filter(title.like(pattern)))
-                .execute(conn)
-                .expect("Failed to delete!");
-            println!("Deleted {} posts", num_deleted);
+                let num_deleted = diesel::delete(tasks.find(target_id))
+                    .execute(conn)
+                    .expect("Failed to delete!");
+                println!("Deleted {} posts", num_deleted);
+            } else {
+                let num_deleted = diesel::delete(tasks)
+                    .filter(title.eq(target_id))
+                    .execute(conn)
+                    .expect("Failed to delete!");
+                println!("Deleted {} posts", num_deleted);
+            }
         }
         self.show_tasks();
     }

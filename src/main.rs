@@ -8,8 +8,6 @@ use api::Database;
 use help::help;
 use std::env::args;
 
-// TODO Change show list to have border based on text not fixed
-
 fn main() {
     let conn = establish_connection();
     let db = Database::new(conn);
