@@ -1,12 +1,14 @@
 extern crate term_todo;
 
 mod api;
+mod help;
 
 use self::term_todo::*;
 use api::Database;
+use help::help;
 use std::env::args;
 
-// TODO Add help menu
+// TODO Change show list to have border based on text not fixed
 
 fn main() {
     let conn = establish_connection();
@@ -68,10 +70,7 @@ fn main() {
                 db.update_until(true);
             }
         }
-        "help" => {
-            println!("Help menu\n");
-            println!("Valid commands: \n");
-        }
+        "help" => help(),
         _ => {
             println!("Invalid argument")
         }
