@@ -20,7 +20,7 @@ impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
     }
-    // TODO Separate based on status and add command loop
+    // TODO Add command loop
     // Board display
     pub fn display_board(&self) {
         use term_todo::schema::tasks::dsl::*;
@@ -30,8 +30,55 @@ impl Database {
             .limit(20)
             .load::<Task>(conn)
             .expect("Error loading tasks");
+        // Separate tasks to in progress and to do
+        let mut col_not_in_progress: Vec<Task> = Vec::new();
+        let mut col_in_progress: Vec<Task> = Vec::new();
         for task in res {
-            println!("Title: {}", task.title);
+            match task.in_progress {
+                true => col_in_progress.push(task),
+                false => col_not_in_progress.push(task),
+            }
+        }
+
+        // Display solution
+        println!("=================================");
+        println!("|To Do\t\t\t\t|");
+        println!("=================================\n");
+        println!("---------------------------------");
+        for task in col_not_in_progress {
+            println!(
+                "|{}: {}\t\t\t|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                task.id.to_string().as_str().blue(),
+                task.title.magenta().bold(),
+                task.in_progress.to_string().as_str().cyan(),
+                task.created_at.to_string().as_str().green(),
+                if task.until_at != None {
+                    task.until_at.unwrap().to_string().as_str().red()
+                } else {
+                    "None\t".green()
+                }
+            );
+        }
+
+        println!("---------------------------------\n");
+        println!("=================================");
+        println!("|In progress\t\t\t|");
+        println!("=================================\n");
+        println!("---------------------------------");
+        for task in col_in_progress {
+            println!(
+                "|{}: {}\t\t\t|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                task.id.to_string().as_str().blue(),
+                task.title.magenta().bold(),
+                task.in_progress.to_string().as_str().cyan(),
+                task.created_at.to_string().as_str().green(),
+                if task.until_at != None {
+                    task.until_at.unwrap().to_string().as_str().red()
+                } else {
+                    "None\t".green()
+                }
+            );
+            println!("---------------------------------");
         }
     }
     // Display all tasks
@@ -56,7 +103,7 @@ impl Database {
                 if task.until_at != None {
                     task.until_at.unwrap().to_string().as_str().red()
                 } else {
-                    "None".green()
+                    "None\t".green()
                 }
             );
             println!("---------------------------------");
@@ -145,8 +192,8 @@ impl Database {
         // Get task to change status based on argument
         if arg {
             // Get command line arguments
-            let target_id = args()
-                .nth(1)
+            let target_id: i32 = args()
+                .nth(2)
                 .expect("requires task id")
                 .parse::<i32>()
                 .expect("Invalid ID");
