@@ -12,8 +12,17 @@ fn main() {
     let conn = establish_connection();
     let db = Database::new(conn);
 
-    // CLI commands handling
-    let arg = args().nth(1).expect("Getting arguments failed");
+    // Try to get CLI args or display all tasks
+    let arg = args().nth(1);
+    let arg = match arg {
+        Some(val) => val,
+        None => String::new(),
+    };
+
+    if arg.len() == 0 {
+        db.show_tasks();
+        return;
+    }
 
     match arg.as_str() {
         "add" => db.add_task(),
