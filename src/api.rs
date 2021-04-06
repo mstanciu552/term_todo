@@ -12,6 +12,8 @@ use regex::Regex;
 use std::env::args;
 use std::io::stdin;
 
+// TODO Add `Done` section to tasks
+
 pub struct Database {
     conn: PgConnection,
 }
@@ -20,7 +22,6 @@ impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
     }
-    // TODO Add command loop
     // Board display
     pub fn display_board(&self) {
         use term_todo::schema::tasks::dsl::*;
@@ -33,24 +34,30 @@ impl Database {
         // Separate tasks to in progress and to do
         let mut col_not_in_progress: Vec<Task> = Vec::new();
         let mut col_in_progress: Vec<Task> = Vec::new();
+        let mut col_done: Vec<Task> = Vec::new();
         for task in res {
             match task.in_progress {
-                true => col_in_progress.push(task),
-                false => col_not_in_progress.push(task),
+                Some(true) => col_in_progress.push(task),
+                Some(false) => col_not_in_progress.push(task),
+                None => col_done.push(task),
             }
         }
 
         // Display solution
-        println!("=================================");
-        println!("|To Do\t\t\t\t|");
-        println!("=================================\n");
+        println!("{}", "=================================".red());
+        println!("{}", "|To Do\t\t\t\t|".red().bold());
+        println!("{}", "=================================\n".red());
         println!("---------------------------------");
-        for task in col_not_in_progress {
+        for task in &col_not_in_progress {
             println!(
-                "|{}: {}\t\t\t|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
-                task.in_progress.to_string().as_str().cyan(),
+                task.in_progress
+                    .unwrap_or(false)
+                    .to_string()
+                    .as_str()
+                    .cyan(),
                 task.created_at.to_string().as_str().green(),
                 if task.until_at != None {
                     task.until_at.unwrap().to_string().as_str().red()
@@ -58,19 +65,27 @@ impl Database {
                     "None\t".green()
                 }
             );
+            // If the current task id is the last task id don't print delimiter
+            if task.id != col_not_in_progress.last().unwrap().id {
+                println!("---------------------------------");
+            }
         }
 
-        println!("---------------------------------\n");
-        println!("=================================");
-        println!("|In progress\t\t\t|");
-        println!("=================================\n");
+        println!("{}", "---------------------------------\n".blue());
+        println!("{}", "=================================".blue());
+        println!("{}", "|In Progress\t\t\t|".blue().bold().blue());
+        println!("{}", "=================================\n".blue());
         println!("---------------------------------");
         for task in col_in_progress {
             println!(
-                "|{}: {}\t\t\t|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
-                task.in_progress.to_string().as_str().cyan(),
+                task.in_progress
+                    .unwrap_or(false)
+                    .to_string()
+                    .as_str()
+                    .cyan(),
                 task.created_at.to_string().as_str().green(),
                 if task.until_at != None {
                     task.until_at.unwrap().to_string().as_str().red()
@@ -79,6 +94,32 @@ impl Database {
                 }
             );
             println!("---------------------------------");
+        }
+        println!("{}", "\n=================================".green());
+        println!("{}", "|Done\t\t\t\t|".green().bold());
+        println!("{}", "=================================\n".green());
+        println!("---------------------------------");
+        for task in col_done {
+            println!(
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                task.id.to_string().as_str().blue(),
+                task.title.magenta().bold(),
+                task.in_progress
+                    .unwrap_or(false)
+                    .to_string()
+                    .as_str()
+                    .cyan(),
+                task.created_at.to_string().as_str().green(),
+                if task.until_at != None {
+                    task.until_at.unwrap().to_string().as_str().red()
+                } else {
+                    "None\t".green()
+                }
+            );
+            // If the current task id is the last task id don't print delimiter
+            if task.id != col_not_in_progress.last().unwrap().id {
+                println!("---------------------------------");
+            }
         }
     }
     // Display all tasks
@@ -91,14 +132,21 @@ impl Database {
             .load::<Task>(conn)
             .expect("Error loading tasks");
 
-        println!("There are {} tasks", res.len().to_string().as_str().bold());
+        println!(
+            "There are {} tasks",
+            res.len().to_string().as_str().yellow().bold()
+        );
         for task in res {
             println!("---------------------------------");
             println!(
-                "|{}: {}\t\t\t|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
-                task.in_progress.to_string().as_str().cyan(),
+                task.in_progress
+                    .unwrap_or(false)
+                    .to_string()
+                    .as_str()
+                    .cyan(),
                 task.created_at.to_string().as_str().green(),
                 if task.until_at != None {
                     task.until_at.unwrap().to_string().as_str().red()
@@ -131,9 +179,7 @@ impl Database {
     pub fn delete_task(&self, arg: bool) {
         use schema::tasks::dsl::*;
         let conn = &self.conn;
-        self.show_tasks();
 
-        // TODO Change delete to based on exact pattern
         // Get task to delete based on argument
         if arg {
             println!("Target_id: ");
@@ -148,17 +194,24 @@ impl Database {
                 let num_deleted = diesel::delete(tasks.find(target_id))
                     .execute(conn)
                     .expect("Failed to delete!");
-                println!("Deleted {} posts", num_deleted);
+                println!(
+                    "Deleted {} posts",
+                    num_deleted.to_string().as_str().yellow().bold()
+                );
             } else {
                 let num_deleted = diesel::delete(tasks)
                     .filter(title.eq(target_id))
                     .execute(conn)
                     .expect("Failed to delete!");
-                println!("Deleted {} posts", num_deleted);
+                println!(
+                    "Deleted {} posts",
+                    num_deleted.to_string().as_str().yellow().bold()
+                );
             }
 
         // Get task to delete based on input from keyboard
         } else {
+            self.show_tasks();
             println!("Target id: ");
             let mut target = String::new();
             stdin().read_line(&mut target).unwrap();
@@ -179,7 +232,10 @@ impl Database {
                     .filter(title.eq(target_id))
                     .execute(conn)
                     .expect("Failed to delete!");
-                println!("Deleted {} posts", num_deleted);
+                println!(
+                    "Deleted {} posts",
+                    num_deleted.to_string().as_str().yellow().bold()
+                );
             }
         }
         self.show_tasks();
@@ -203,7 +259,11 @@ impl Database {
                 .set(in_progress.eq(true))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed status of task {} to in progress", task.title);
+            println!(
+                "Changed status of task {} to {}",
+                task.title.green().bold(),
+                "in progress".blue().bold()
+            );
         // Get task to change status based on keyboard input
         } else {
             // Get keyboard input
@@ -217,7 +277,11 @@ impl Database {
                 .set(in_progress.eq(true))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed status of task {} to in progress", task.title);
+            println!(
+                "Changed status of task {} to {}",
+                task.title.green().bold(),
+                "in progress".blue().bold()
+            );
         }
     }
 
@@ -245,7 +309,11 @@ impl Database {
                 .set(title.eq(new_title))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed title of task {} to {}", task.id, task.title);
+            println!(
+                "Changed title of task {} to {}",
+                task.id.to_string().as_str().yellow().bold(),
+                task.title.green().bold()
+            );
         // Get task to change status based on keyboard input
         } else {
             // Get keyboard input
@@ -264,7 +332,11 @@ impl Database {
                 .set(title.eq(new_title))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
-            println!("Changed title of task {} to {}", task.id, task.title);
+            println!(
+                "Changed title of task {} to {}",
+                task.id.to_string().as_str().yellow().bold(),
+                task.title.green().bold()
+            );
         }
         self.show_tasks();
     }
@@ -297,8 +369,8 @@ impl Database {
                 .expect(&format!("Unable to find task {}", target_id));
             println!(
                 "Changed due date of task {} to {}",
-                task.title,
-                task.until_at.unwrap()
+                task.title.to_string().as_str().green().bold(),
+                task.until_at.unwrap().to_string().as_str().red().bold()
             );
             // Get task to change status based on keyboard input
         } else {
@@ -324,10 +396,31 @@ impl Database {
                 .expect(&format!("Unable to find task {}", target_id));
             println!(
                 "Changed due date of task {} to {}",
-                task.title,
-                task.until_at.unwrap()
+                task.title.green().bold(),
+                task.until_at.unwrap().to_string().as_str().red().bold()
             );
         }
         self.show_tasks();
+    }
+
+    pub fn set_done(&self, target_id: String) {
+        use schema::tasks::dsl::*;
+        let conn = &self.conn;
+
+        if target_id.len() == 0 {
+            // Get keyboard input
+            return;
+        }
+
+        // Argument was passed in
+        let task: Task = diesel::update(tasks.find(target_id.parse::<i32>().unwrap()))
+            .set(in_progress.eq(None as Option<bool>))
+            .get_result(conn)
+            .expect(&format!("Unable to find task {}", target_id));
+        println!(
+            "Updated task {} to status {}",
+            task.title.to_string().as_str().magenta().bold(),
+            "Done".green().bold()
+        );
     }
 }

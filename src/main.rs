@@ -20,7 +20,7 @@ fn main() {
     };
 
     if arg.len() == 0 {
-        db.show_tasks();
+        db.display_board();
         return;
     }
     match arg.as_str() {
@@ -51,6 +51,10 @@ fn main() {
             } else {
                 db.update_data(true);
             }
+        }
+        "done" => {
+            let target_id = args().nth(2).unwrap_or(String::new());
+            db.set_done(target_id);
         }
         "utitle" => {
             let target_id = args().nth(2);

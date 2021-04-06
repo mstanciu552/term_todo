@@ -4,6 +4,6 @@ table! {
         title -> Text,
         created_at -> Date,
         until_at -> Nullable<Date>,
-        in_progress -> Bool,
+        in_progress -> Nullable<Bool>,
     }
 }

@@ -4,5 +4,5 @@ create table tasks (
   title TEXT not null,
   created_at date not null default Now(), 
   until_at date default null, 
-  in_progress boolean not null default 'f'
+  in_progress boolean  default 'f'
 );
