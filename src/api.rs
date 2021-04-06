@@ -172,7 +172,7 @@ impl Database {
         let until_at = until_at.trim_end();
 
         let task = make_task(&conn, title, until_at);
-        println!("Saved task {}", task.title);
+        println!("Saved task {}!", task.title.green().bold());
         self.show_tasks();
     }
 
@@ -409,6 +409,19 @@ impl Database {
 
         if target_id.len() == 0 {
             // Get keyboard input
+            let mut tid = String::new();
+            stdin().read_line(&mut tid).unwrap();
+            let tid = tid.trim_end().parse::<i32>().unwrap();
+            let task: Task = diesel::update(tasks.find(tid))
+                .set(in_progress.eq(None as Option<bool>))
+                .get_result(conn)
+                .expect(&format!("Unable to find task {}", target_id));
+            println!(
+                "Updated task {} to status {}",
+                task.title.to_string().as_str().magenta().bold(),
+                "Done".green().bold()
+            );
+
             return;
         }
 
