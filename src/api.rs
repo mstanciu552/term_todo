@@ -2,7 +2,7 @@ extern crate chrono;
 extern crate diesel;
 extern crate regex;
 extern crate term_todo;
-// sadasdfasd
+
 use self::term_todo::*;
 use colored::Colorize;
 use diesel::prelude::*;

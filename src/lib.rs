@@ -3,10 +3,12 @@ extern crate diesel;
 extern crate chrono;
 extern crate dotenv;
 
+mod config;
 pub mod models;
 pub mod schema;
 
 use chrono::NaiveDate;
+use config::database_connection;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenv::dotenv;
@@ -17,7 +19,7 @@ use std::env;
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be valid");
+    let database_url = env::var("DATABASE_URL").unwrap_or(database_connection());
 
     PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
 }

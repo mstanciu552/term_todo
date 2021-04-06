@@ -23,7 +23,6 @@ fn main() {
         db.show_tasks();
         return;
     }
-
     match arg.as_str() {
         "add" => db.add_task(),
         "list" => db.show_tasks(),
