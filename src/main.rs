@@ -23,20 +23,12 @@ fn main() {
         "list" => db.show_tasks(),
         "delete" => {
             let target_id = args().nth(2).unwrap_or(String::new());
-            if target_id.len() == 0 {
-                db.delete_task(false);
-            } else {
-                db.delete_task(true);
-            }
+            db.delete_task(target_id);
         }
         "doing" => {
             // Either wait for another argument or ask for input
             let target_id = args().nth(2).unwrap_or(String::new());
-            if target_id.len() == 0 {
-                db.update_data(false);
-            } else {
-                db.update_data(true);
-            }
+            db.update_data(target_id);
         }
         "done" => {
             let target_id = args().nth(2).unwrap_or(String::new());
@@ -44,19 +36,11 @@ fn main() {
         }
         "utitle" => {
             let target_id = args().nth(2).unwrap_or(String::new());
-            if target_id.len() == 0 {
-                db.update_title(false);
-            } else {
-                db.update_title(true);
-            }
+            db.update_title(target_id);
         }
         "udate" => {
             let target_id = args().nth(2).unwrap_or(String::new());
-            if target_id.len() == 0 {
-                db.update_until(false);
-            } else {
-                db.update_until(true);
-            }
+            db.update_until(target_id);
         }
         "board" => db.display_board(),
         "help" => help(),

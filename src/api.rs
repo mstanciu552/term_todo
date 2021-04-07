@@ -9,10 +9,7 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use models::Task;
 use regex::Regex;
-use std::env::args;
 use std::io::stdin;
-
-// TODO Add `Done` section to tasks
 
 pub struct Database {
     conn: PgConnection,
@@ -176,20 +173,18 @@ impl Database {
         self.show_tasks();
     }
 
-    pub fn delete_task(&self, arg: bool) {
+    pub fn delete_task(&self, arg: String) {
         use schema::tasks::dsl::*;
         let conn = &self.conn;
 
         // Get task to delete based on argument
-        if arg {
-            println!("Target_id: ");
-            let target_id = args().nth(2).expect("Expected target title");
+        if arg.len() > 0 {
             // Decide if the argument passed in is an ID or a TITLE
             let re = Regex::new(r"^\d*$").unwrap();
-            let input_format = re.is_match(target_id.as_str());
+            let input_format = re.is_match(arg.as_str());
             if input_format {
                 // Input is number based so an ID
-                let target_id = target_id.parse::<i32>().unwrap();
+                let target_id = arg.parse::<i32>().unwrap();
 
                 let num_deleted = diesel::delete(tasks.find(target_id))
                     .execute(conn)
@@ -200,7 +195,7 @@ impl Database {
                 );
             } else {
                 let num_deleted = diesel::delete(tasks)
-                    .filter(title.eq(target_id))
+                    .filter(title.eq(arg))
                     .execute(conn)
                     .expect("Failed to delete!");
                 println!(
@@ -240,25 +235,19 @@ impl Database {
         }
         self.show_tasks();
     }
-    pub fn update_data(&self, arg: bool) {
+    pub fn update_data(&self, arg: String) {
         use schema::tasks::dsl::*;
         self.show_tasks();
         // Get connection to db
         let conn = &self.conn;
         // Get task to change status based on argument
-        if arg {
-            // Get command line arguments
-            let target_id: i32 = args()
-                .nth(2)
-                .expect("requires task id")
-                .parse::<i32>()
-                .expect("Invalid ID");
-
+        if arg.len() > 0 {
+            // TODO Add option for title based replace
             // Update specified post
-            let task: Task = diesel::update(tasks.find(target_id))
+            let task: Task = diesel::update(tasks.find(arg.parse::<i32>().unwrap()))
                 .set(in_progress.eq(true))
                 .get_result(conn)
-                .expect(&format!("Unable to find task {}", target_id));
+                .expect(&format!("Unable to find task {}", arg));
             println!(
                 "Changed status of task {} to {}",
                 task.title.green().bold(),
@@ -285,19 +274,13 @@ impl Database {
         }
     }
 
-    pub fn update_title(&self, arg: bool) {
+    pub fn update_title(&self, arg: String) {
         use schema::tasks::dsl::*;
         self.show_tasks();
         // Get connection to db
         let conn = &self.conn;
         // Get task to change status based on argument
-        if arg {
-            // Get command line arguments
-            let target_id = args()
-                .nth(1)
-                .expect("requires task id")
-                .parse::<i32>()
-                .expect("Invalid ID");
+        if arg.len() > 0 {
             // Get new title
             println!("New Title: ");
             let mut new_title = String::new();
@@ -305,10 +288,10 @@ impl Database {
             let new_title = new_title.trim_end();
 
             // Update specified post
-            let task: Task = diesel::update(tasks.find(target_id))
+            let task: Task = diesel::update(tasks.find(arg.parse::<i32>().unwrap()))
                 .set(title.eq(new_title))
                 .get_result(conn)
-                .expect(&format!("Unable to find task {}", target_id));
+                .expect(&format!("Unable to find task {}", arg));
             println!(
                 "Changed title of task {} to {}",
                 task.id.to_string().as_str().yellow().bold(),
@@ -340,19 +323,13 @@ impl Database {
         }
         self.show_tasks();
     }
-    pub fn update_until(&self, arg: bool) {
+    pub fn update_until(&self, arg: String) {
         use schema::tasks::dsl::*;
         self.show_tasks();
         // Get connection to db
         let conn = &self.conn;
         // Get task to change status based on argument
-        if arg {
-            // Get command line arguments
-            let target_id = args()
-                .nth(2)
-                .expect("requires task id")
-                .parse::<i32>()
-                .expect("Invalid ID");
+        if arg.len() > 0 {
             // Get new date
             println!("Until(YYYY-MM-DD || <empty>): ");
             let mut new_until_at = String::new();
@@ -363,10 +340,10 @@ impl Database {
                 chrono::NaiveDate::parse_from_str(new_until_at, "%Y-%m-%d").unwrap();
 
             // Update specified post
-            let task: Task = diesel::update(tasks.find(target_id))
+            let task: Task = diesel::update(tasks.find(arg.parse::<i32>().unwrap()))
                 .set(until_at.eq(new_until_date))
                 .get_result(conn)
-                .expect(&format!("Unable to find task {}", target_id));
+                .expect(&format!("Unable to find task {}", arg));
             println!(
                 "Changed due date of task {} to {}",
                 task.title.to_string().as_str().green().bold(),
