@@ -175,6 +175,7 @@ impl Database {
 
     pub fn delete_task(&self, arg: String) {
         use schema::tasks::dsl::*;
+
         let conn = &self.conn;
 
         // Get task to delete based on argument
@@ -182,6 +183,7 @@ impl Database {
             // Decide if the argument passed in is an ID or a TITLE
             let re = Regex::new(r"^\d*$").unwrap();
             let input_format = re.is_match(arg.as_str());
+
             if input_format {
                 // Input is number based so an ID
                 let target_id = arg.parse::<i32>().unwrap();
@@ -189,6 +191,7 @@ impl Database {
                 let num_deleted = diesel::delete(tasks.find(target_id))
                     .execute(conn)
                     .expect("Failed to delete!");
+
                 println!(
                     "Deleted {} posts",
                     num_deleted.to_string().as_str().yellow().bold()
@@ -198,6 +201,7 @@ impl Database {
                     .filter(title.eq(arg))
                     .execute(conn)
                     .expect("Failed to delete!");
+
                 println!(
                     "Deleted {} posts",
                     num_deleted.to_string().as_str().yellow().bold()
@@ -211,9 +215,11 @@ impl Database {
             let mut target = String::new();
             stdin().read_line(&mut target).unwrap();
             let target_id = target.trim_end();
+
             // Decide if the argument passed in is an ID or a TITLE
             let re = Regex::new(r"^\d*$").unwrap();
             let input_format = re.is_match(target_id);
+
             if input_format {
                 // Input is number based so an ID
                 let target_id = target_id.parse::<i32>().unwrap();
@@ -227,6 +233,7 @@ impl Database {
                     .filter(title.eq(target_id))
                     .execute(conn)
                     .expect("Failed to delete!");
+
                 println!(
                     "Deleted {} posts",
                     num_deleted.to_string().as_str().yellow().bold()
@@ -238,8 +245,10 @@ impl Database {
     pub fn update_data(&self, arg: String) {
         use schema::tasks::dsl::*;
         self.show_tasks();
+
         // Get connection to db
         let conn = &self.conn;
+
         // Get task to change status based on argument
         if arg.len() > 0 {
             // TODO Add option for title based replace
@@ -248,6 +257,7 @@ impl Database {
                 .set(in_progress.eq(true))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", arg));
+
             println!(
                 "Changed status of task {} to {}",
                 task.title.green().bold(),
@@ -266,6 +276,7 @@ impl Database {
                 .set(in_progress.eq(true))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
+
             println!(
                 "Changed status of task {} to {}",
                 task.title.green().bold(),
@@ -277,8 +288,10 @@ impl Database {
     pub fn update_title(&self, arg: String) {
         use schema::tasks::dsl::*;
         self.show_tasks();
+
         // Get connection to db
         let conn = &self.conn;
+
         // Get task to change status based on argument
         if arg.len() > 0 {
             // Get new title
@@ -292,6 +305,7 @@ impl Database {
                 .set(title.eq(new_title))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", arg));
+
             println!(
                 "Changed title of task {} to {}",
                 task.id.to_string().as_str().yellow().bold(),
@@ -304,6 +318,7 @@ impl Database {
             let mut target_id = String::new();
             stdin().read_line(&mut target_id).unwrap();
             let target_id = target_id.trim_end().parse::<i32>().unwrap();
+
             // Get new title
             println!("New Title: ");
             let mut new_title = String::new();
@@ -315,6 +330,7 @@ impl Database {
                 .set(title.eq(new_title))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
+
             println!(
                 "Changed title of task {} to {}",
                 task.id.to_string().as_str().yellow().bold(),
@@ -326,8 +342,10 @@ impl Database {
     pub fn update_until(&self, arg: String) {
         use schema::tasks::dsl::*;
         self.show_tasks();
+
         // Get connection to db
         let conn = &self.conn;
+
         // Get task to change status based on argument
         if arg.len() > 0 {
             // Get new date
@@ -335,6 +353,12 @@ impl Database {
             let mut new_until_at = String::new();
             stdin().read_line(&mut new_until_at).unwrap();
             let new_until_at = new_until_at.trim_end();
+
+            // If nothing is passed skip
+            if new_until_at.len() == 0 {
+                return;
+            }
+
             // Convert string to NaiveDate
             let new_until_date =
                 chrono::NaiveDate::parse_from_str(new_until_at, "%Y-%m-%d").unwrap();
@@ -344,6 +368,7 @@ impl Database {
                 .set(until_at.eq(new_until_date))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", arg));
+
             println!(
                 "Changed due date of task {} to {}",
                 task.title.to_string().as_str().green().bold(),
@@ -356,11 +381,17 @@ impl Database {
             let mut target_id = String::new();
             stdin().read_line(&mut target_id).unwrap();
             let target_id = target_id.trim_end().parse::<i32>().unwrap();
+
             // Get new date
             println!("Until(YYYY-MM-DD || <empty>): ");
             let mut new_until_at = String::new();
             stdin().read_line(&mut new_until_at).unwrap();
             let new_until_at = new_until_at.trim_end();
+
+            // If no date pased don't modify
+            if new_until_at.len() == 0 {
+                return;
+            }
 
             // Convert string to NaiveDate
             let new_until_date =
@@ -371,6 +402,7 @@ impl Database {
                 .set(until_at.eq(new_until_date))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
+
             println!(
                 "Changed due date of task {} to {}",
                 task.title.green().bold(),
@@ -389,10 +421,13 @@ impl Database {
             let mut tid = String::new();
             stdin().read_line(&mut tid).unwrap();
             let tid = tid.trim_end().parse::<i32>().unwrap();
+
+            // Modify the status
             let task: Task = diesel::update(tasks.find(tid))
                 .set(in_progress.eq(None as Option<bool>))
                 .get_result(conn)
                 .expect(&format!("Unable to find task {}", target_id));
+
             println!(
                 "Updated task {} to status {}",
                 task.title.to_string().as_str().magenta().bold(),
@@ -407,6 +442,7 @@ impl Database {
             .set(in_progress.eq(None as Option<bool>))
             .get_result(conn)
             .expect(&format!("Unable to find task {}", target_id));
+
         println!(
             "Updated task {} to status {}",
             task.title.to_string().as_str().magenta().bold(),
