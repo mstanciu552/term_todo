@@ -4,6 +4,7 @@ extern crate regex;
 extern crate term_todo;
 
 use self::term_todo::*;
+use chrono::prelude::*;
 use colored::Colorize;
 use diesel::prelude::*;
 use diesel::PgConnection;
@@ -14,7 +15,8 @@ use std::io::stdin;
 pub struct Database {
     conn: PgConnection,
 }
-
+// TODO Change so if the date is smaller than 0
+// it is not displayed
 impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
@@ -28,6 +30,8 @@ impl Database {
             .limit(20)
             .load::<Task>(conn)
             .expect("Error loading tasks");
+        // Get today's date as chrono::NaiveDate
+        let now: chrono::NaiveDate = Utc::now().naive_utc().date();
         // Separate tasks to in progress and to do
         let mut col_not_in_progress: Vec<Task> = Vec::new();
         let mut col_in_progress: Vec<Task> = Vec::new();
@@ -47,7 +51,7 @@ impl Database {
         println!("---------------------------------");
         for task in &col_not_in_progress {
             println!(
-                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}{}|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
                 task.in_progress
@@ -60,6 +64,14 @@ impl Database {
                     task.until_at.unwrap().to_string().as_str().red()
                 } else {
                     "None\t".green()
+                },
+                if task.until_at != None {
+                    format!(
+                        "({} days left)",
+                        task.until_at.unwrap().signed_duration_since(now).num_days()
+                    )
+                } else {
+                    format!("\t\t")
                 }
             );
             // If the current task id is the last task id don't print delimiter
@@ -75,7 +87,7 @@ impl Database {
         println!("---------------------------------");
         for task in col_in_progress {
             println!(
-                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}{}|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
                 task.in_progress
@@ -88,6 +100,14 @@ impl Database {
                     task.until_at.unwrap().to_string().as_str().red()
                 } else {
                     "None\t".green()
+                },
+                if task.until_at != None {
+                    format!(
+                        "({} days left)",
+                        task.until_at.unwrap().signed_duration_since(now).num_days()
+                    )
+                } else {
+                    format!("\t\t")
                 }
             );
             println!("---------------------------------");
@@ -98,7 +118,7 @@ impl Database {
         println!("---------------------------------");
         for task in col_done {
             println!(
-                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}{}|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
                 task.in_progress
@@ -111,6 +131,14 @@ impl Database {
                     task.until_at.unwrap().to_string().as_str().red()
                 } else {
                     "None\t".green()
+                },
+                if task.until_at != None {
+                    format!(
+                        "({} days left)",
+                        task.until_at.unwrap().signed_duration_since(now).num_days()
+                    )
+                } else {
+                    format!("\t\t")
                 }
             );
             // If the current task id is the last task id don't print delimiter
@@ -128,6 +156,8 @@ impl Database {
             .limit(5)
             .load::<Task>(conn)
             .expect("Error loading tasks");
+        // Get today's date as chrono::NaiveDate
+        let now: chrono::NaiveDate = Utc::now().naive_utc().date();
 
         println!(
             "There are {} tasks",
@@ -136,7 +166,7 @@ impl Database {
         for task in res {
             println!("---------------------------------");
             println!(
-                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}\t\t|",
+                "|{}: {}|\n|In Progress: {}\t\t|\n|Created at: {}\t\t|\n|Due date: {}{}|",
                 task.id.to_string().as_str().blue(),
                 task.title.magenta().bold(),
                 task.in_progress
@@ -149,6 +179,14 @@ impl Database {
                     task.until_at.unwrap().to_string().as_str().red()
                 } else {
                     "None\t".green()
+                },
+                if task.until_at != None {
+                    format!(
+                        "({} days left)",
+                        task.until_at.unwrap().signed_duration_since(now).num_days()
+                    )
+                } else {
+                    format!("\t\t")
                 }
             );
             println!("---------------------------------");
