@@ -66,10 +66,14 @@ impl Database {
                     "None\t".green()
                 },
                 if task.until_at != None {
-                    format!(
-                        "({} days left)",
-                        task.until_at.unwrap().signed_duration_since(now).num_days()
-                    )
+                    if task.until_at.unwrap().signed_duration_since(now).num_days() >= 0 {
+                        format!(
+                            "({} days left)",
+                            task.until_at.unwrap().signed_duration_since(now).num_days()
+                        )
+                    } else {
+                        format!("\t\t")
+                    }
                 } else {
                     format!("\t\t")
                 }
@@ -102,10 +106,14 @@ impl Database {
                     "None\t".green()
                 },
                 if task.until_at != None {
-                    format!(
-                        "({} days left)",
-                        task.until_at.unwrap().signed_duration_since(now).num_days()
-                    )
+                    if task.until_at.unwrap().signed_duration_since(now).num_days() >= 0 {
+                        format!(
+                            "({} days left)",
+                            task.until_at.unwrap().signed_duration_since(now).num_days()
+                        )
+                    } else {
+                        format!("\t\t")
+                    }
                 } else {
                     format!("\t\t")
                 }
@@ -133,10 +141,14 @@ impl Database {
                     "None\t".green()
                 },
                 if task.until_at != None {
-                    format!(
-                        "({} days left)",
-                        task.until_at.unwrap().signed_duration_since(now).num_days()
-                    )
+                    if task.until_at.unwrap().signed_duration_since(now).num_days() >= 0 {
+                        format!(
+                            "({} days left)",
+                            task.until_at.unwrap().signed_duration_since(now).num_days()
+                        )
+                    } else {
+                        format!("\t\t")
+                    }
                 } else {
                     format!("\t\t")
                 }
@@ -181,10 +193,14 @@ impl Database {
                     "None\t".green()
                 },
                 if task.until_at != None {
-                    format!(
-                        "({} days left)",
-                        task.until_at.unwrap().signed_duration_since(now).num_days()
-                    )
+                    if task.until_at.unwrap().signed_duration_since(now).num_days() >= 0 {
+                        format!(
+                            "({} days left)",
+                            task.until_at.unwrap().signed_duration_since(now).num_days()
+                        )
+                    } else {
+                        format!("\t\t")
+                    }
                 } else {
                     format!("\t\t")
                 }
