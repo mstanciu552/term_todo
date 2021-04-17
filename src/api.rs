@@ -15,8 +15,9 @@ use std::io::stdin;
 pub struct Database {
     conn: PgConnection,
 }
-// TODO Change so if the date is smaller than 0
-// it is not displayed
+
+// TODO Make Done tasks only last 1 week
+
 impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
