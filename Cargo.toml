@@ -3,6 +3,13 @@ name = "term-todo"
 version = "0.1.0"
 authors = ["mstanciu552 <mstanciu552@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A command line tool for keeping up with tasks."
+readme = "README.md"
+homepage = "https://github.com/mstanciu552/term_todo"
+repository = "https://github.com/mstanciu552/term_todo"
+keywords = ["cli", "tasks"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "ttask"
