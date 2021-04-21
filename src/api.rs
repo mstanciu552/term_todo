@@ -16,8 +16,6 @@ pub struct Database {
     conn: PgConnection,
 }
 
-// TODO Make Done tasks only last 1 week
-
 impl Database {
     pub fn new(conn: PgConnection) -> Database {
         Database { conn }
@@ -28,7 +26,6 @@ impl Database {
 
         let conn = &self.conn;
         let res: Vec<Task> = tasks
-            .limit(20)
             .load::<Task>(conn)
             .expect("Error loading tasks");
         // Get today's date as chrono::NaiveDate
@@ -44,7 +41,6 @@ impl Database {
                 None => col_done.push(task),
             }
         }
-
         // Display solution
         println!("{}", "=================================".red());
         println!("{}", "|To Do\t\t\t\t|".red().bold());
@@ -503,5 +499,30 @@ impl Database {
             task.title.to_string().as_str().magenta().bold(),
             "Done".green().bold()
         );
+    }
+    pub fn auto_delete(&self) {
+        use term_todo::schema::tasks::dsl::*;
+       
+        let conn = &self.conn;
+        let res: Vec<Task> = tasks
+            .load::<Task>(conn)
+            .expect("Error loading tasks");
+        // Get today's date as chrono::NaiveDate
+        let now: chrono::NaiveDate = Utc::now().naive_utc().date();
+        for task in &res {
+            if task.in_progress == None {
+                if task.created_at.signed_duration_since(now).num_days().abs() >= 7 {
+                    // Delete task
+                    diesel::delete(tasks)
+                        .filter(id.eq(task.id))
+                        .execute(conn)
+                        .expect("Failed to delete!");
+
+
+                    println!("Deleted task \"{}\"", task.title);
+                }
+               
+            }
+        }
     }
 }

@@ -11,6 +11,8 @@ use std::env::args;
 fn main() {
     let conn = establish_connection();
     let db = Database::new(conn);
+    // Clean up
+    db.auto_delete();
 
     // Try to get CLI args or display all tasks
     let arg = args().nth(1).unwrap_or(String::new());
